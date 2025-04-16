@@ -5,6 +5,7 @@ const {
   getPatientById,
   updatePatient,
   deletePatient,
+  getPatientHistory,
 } = require("../controllers/patientController");
 
 const upload = require("../middleware/upload"); // 📌 ВАЖНО: этот импорт должен быть выше, ДО router.post
@@ -30,6 +31,7 @@ router.post("/", createPatient);
 router.get("/", getPatients);
 router.get("/:id", getPatientById);
 router.put("/:id", updatePatient);
+router.get("/:id/history", getPatientHistory);
 router.delete("/:id", deletePatient);
 
 module.exports = router;

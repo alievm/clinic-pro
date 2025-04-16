@@ -6,6 +6,15 @@ const visitSchema = new mongoose.Schema({
     ref: "Patient",
     required: true,
   },
+  services: [
+    {
+      service: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Service",
+      },
+      quantity: { type: Number, default: 1 }
+    }
+  ],
   doctor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const visitRoutes = require("./routes/visitRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const path = require("path");
 dotenv.config();
 connectDB();
@@ -25,6 +26,7 @@ app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/visits", visitRoutes);
 
 // Error handler placeholder

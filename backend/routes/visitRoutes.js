@@ -5,7 +5,8 @@ const {
   getVisitById,
   updateVisit,
   deleteVisit,
-  getVisitWithPayments
+  getVisitWithPayments,
+  addServiceToVisit
 } = require("../controllers/visitController");
 
 const { protect, authorize } = require("../middleware/authMiddleware");
@@ -23,5 +24,6 @@ router.get("/:id", getVisitById);
 router.put("/:id", updateVisit);
 router.delete("/:id", deleteVisit);
 router.get("/:id/payments", getVisitWithPayments);
+router.put("/:id/add-service", addServiceToVisit);
 
 module.exports = router;

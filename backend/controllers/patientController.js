@@ -1,4 +1,6 @@
 const Patient = require("../models/Patient");
+const Visit = require("../models/Visit");
+const Payment = require("../models/Payment");
 
 // ✅ Create new patient
 const createPatient = async (req, res) => {
@@ -37,6 +39,54 @@ const getPatients = async (req, res) => {
     });
   };
 
+
+  const getPatientHistory = async (req, res) => {
+    const { id } = req.params;
+  
+    // Получить визиты
+    const visits = await Visit.find({ patient: id })
+      .populate("doctor", "name")
+      .populate("services.service", "name price type")
+      .sort({ date: -1 });
+  
+    // Получить все платежи по визитам
+    const payments = await Payment.find({ patient: id })
+      .populate("services.service", "name price type");
+  
+    // Сопоставить payment по visitId
+    const paymentsMap = {};
+    payments.forEach((p) => {
+      paymentsMap[p.visit?.toString()] = {
+        totalAmount: p.totalAmount,
+        paidAmount: p.paidAmount,
+        status: p.status,
+        remainingAmount: p.totalAmount - p.paidAmount,
+      };
+    });
+  
+    // Собрать полную историю
+    const history = visits.map((v) => ({
+      visitId: v._id,
+      date: v.date,
+      status: v.status,
+      doctor: v.doctor?.name || "—",
+      note: v.note || "",
+      services: v.services.map((s) => ({
+        name: s.service.name,
+        price: s.service.price,
+        type: s.service.type,
+        quantity: s.quantity,
+        total: s.quantity * s.service.price,
+      })),
+      payment: paymentsMap[v._id.toString()] || null,
+    }));
+  
+    res.json(history);
+  };
+
+  
+
+
 // ✅ Get single patient
 const getPatientById = async (req, res) => {
   const patient = await Patient.findById(req.params.id);
@@ -64,4 +114,5 @@ module.exports = {
   getPatientById,
   updatePatient,
   deletePatient,
+  getPatientHistory
 };

@@ -217,6 +217,185 @@ const updateVisitDoctorFields = async (req, res) => {
 };
 
 
+const addMultipleTreatmentSteps = async (req, res) => {
+  const { id } = req.params;
+  const { steps } = req.body;
+
+  const visit = await Visit.findById(id);
+  if (!visit) return res.status(404).json({ message: "Visit not found" });
+
+  const payment = await Payment.findOne({ visit: id });
+  if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+  let nextStep = (visit.treatmentPlan?.length || 0) + 1;
+
+  // Добавляем шаги лечения в визит
+  for (const step of steps) {
+    const { title, services, note } = step;
+
+    visit.treatmentPlan.push({
+      step: nextStep++,
+      title,
+      services,
+      note,
+      status: "planned"
+    });
+  }
+
+  // 🔄 Нормализуем все новые услуги из steps
+  const serviceMap = new Map();
+
+  for (const step of steps) {
+    for (const { service, quantity } of step.services) {
+      const key = service.toString();
+      if (serviceMap.has(key)) {
+        serviceMap.set(key, serviceMap.get(key) + quantity);
+      } else {
+        serviceMap.set(key, quantity);
+      }
+    }
+  }
+
+  // Объединяем с уже существующими в payment.services
+  for (const [serviceId, quantityToAdd] of serviceMap.entries()) {
+    const existing = payment.services.find(s => s.service.toString() === serviceId);
+    if (existing) {
+      existing.quantity += quantityToAdd;
+    } else {
+      payment.services.push({
+        service: serviceId,
+        quantity: quantityToAdd
+      });
+    }
+  }
+
+  // 🔢 Пересчёт totalAmount
+  let total = 0;
+  for (const item of payment.services) {
+    const s = await Service.findById(item.service);
+    total += s.price * (item.quantity || 1);
+  }
+
+  payment.totalAmount = total;
+
+  if (payment.paidAmount >= total) {
+    payment.status = "paid";
+    payment.paidAt = new Date();
+  } else if (payment.paidAmount > 0) {
+    payment.status = "partial";
+  } else {
+    payment.status = "pending";
+  }
+
+  await visit.save();
+  await payment.save();
+
+  res.json({ message: "Treatment steps added", visit, payment });
+};
+
+
+const uploadVisitPhoto = async (req, res) => {
+  const { id } = req.params;
+  const { type } = req.body;
+
+  if (!["before", "after"].includes(type)) {
+    return res.status(400).json({ message: "Invalid type. Use 'before' or 'after'" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  const visit = await Visit.findById(id);
+  if (!visit) return res.status(404).json({ message: "Visit not found" });
+
+  const imagePath = `/uploads/${req.file.filename}`;
+
+  if (type === "before") {
+    visit.photosBefore.push(imagePath);
+  } else {
+    visit.photosAfter.push(imagePath);
+  }
+
+  await visit.save();
+
+  res.status(200).json({
+    message: `Photo uploaded (${type})`,
+    path: imagePath,
+    visitId: visit._id
+  });
+};
+
+
+// Teeth Formulae 
+
+const updateToothChart = async (req, res) => {
+  const { id } = req.params;
+  const { updates } = req.body; // объект: { "36": { status, diagnosis, service, notes } }
+
+  const visit = await Visit.findById(id);
+  if (!visit) return res.status(404).json({ message: "Visit not found" });
+
+  const payment = await Payment.findOne({ visit: id });
+  if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+  for (const [toothCode, data] of Object.entries(updates)) {
+    // Обновляем toothChart
+    visit.toothChart.set(toothCode, {
+      ...(visit.toothChart.get(toothCode) || {}),
+      ...data,
+      updatedAt: new Date()
+    });
+
+    // Если есть услуга — добавляем в visit.services и payment.services
+    if (data.service) {
+      const serviceId = data.service.toString();
+      const quantity = data.quantity || 1;
+
+      // 🔁 В visit.services
+      const existingVisit = visit.services.find(s => s.service.toString() === serviceId);
+      if (existingVisit) {
+        existingVisit.quantity += quantity;
+      } else {
+        visit.services.push({ service: serviceId, quantity });
+      }
+
+      // 🔁 В payment.services
+      const existingPayment = payment.services.find(s => s.service.toString() === serviceId);
+      if (existingPayment) {
+        existingPayment.quantity += quantity;
+      } else {
+        payment.services.push({ service: serviceId, quantity });
+      }
+    }
+  }
+
+  // Пересчёт суммы оплаты
+  let total = 0;
+  for (const item of payment.services) {
+    const s = await Service.findById(item.service);
+    total += s.price * (item.quantity || 1);
+  }
+
+  payment.totalAmount = total;
+  if (payment.paidAmount >= total) {
+    payment.status = "paid";
+    payment.paidAt = new Date();
+  } else if (payment.paidAmount > 0) {
+    payment.status = "partial";
+  } else {
+    payment.status = "pending";
+  }
+
+  await visit.save();
+  await payment.save();
+
+  res.json({ message: "Tooth chart updated", visit, payment });
+};
+
+
+
+
 
 module.exports = {
   createVisit,
@@ -228,5 +407,8 @@ module.exports = {
   addServiceToVisit,
   getMyVisits,
   completeVisit,
-  updateVisitDoctorFields
+  updateVisitDoctorFields,
+  addMultipleTreatmentSteps,
+  uploadVisitPhoto,
+  updateToothChart
 };

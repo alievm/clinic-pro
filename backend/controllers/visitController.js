@@ -1,6 +1,7 @@
 const Visit = require("../models/Visit");
 const Payment = require("../models/Payment");
 const Service = require("../models/Service");
+const { removeReservationIfMatched } = require("./reservationController");
 
 const getVisitWithPayments = async (req, res) => {
     const { id } = req.params;
@@ -60,7 +61,7 @@ const createVisit = async (req, res) => {
     paidAmount: 0,
     status: "pending"
   });
-
+  await removeReservationIfMatched({ patient, doctor, date });
   res.status(201).json({ message: "Visit and Payment created", visitId: visit._id });
 };
 

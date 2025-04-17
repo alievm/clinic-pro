@@ -7,6 +7,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const visitRoutes = require("./routes/visitRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const reservationRoutes = require("./routes/reservationRoutes");
 const path = require("path");
 dotenv.config();
 connectDB();
@@ -28,7 +29,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/visits", visitRoutes);
-
+app.use("/api/reservations", reservationRoutes);
 // Error handler placeholder
 app.use((err, req, res, next) => {
     console.error("SERVER ERROR:", err); // вывод в консоль

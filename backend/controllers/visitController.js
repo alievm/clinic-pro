@@ -21,6 +21,17 @@ const getVisitWithPayments = async (req, res) => {
 const createVisit = async (req, res) => {
   const { patient, doctor, date, reason, services } = req.body;
 
+  const existing = await Visit.findOne({
+    patient,
+    status: { $in: ["new", "pending"] }
+  });
+
+  if (existing) {
+    return res.status(400).json({
+      message: "У пациента уже есть незавершённый визит"
+    });
+  }
+
   // Проверим все сервисы
   let total = 0;
   for (const item of services) {
@@ -68,6 +79,17 @@ const getVisitById = async (req, res) => {
     .populate("doctor", "name role");
   if (!visit) return res.status(404).json({ message: "Visit not found" });
   res.json(visit);
+};
+
+const getMyVisits = async (req, res) => {
+  const doctorId = req.user._id;
+
+  const visits = await Visit.find({ doctor: doctorId })
+    .populate("patient", "fullName phoneNumber")
+    .populate("services.service", "name price type")
+    .sort({ date: -1 });
+
+  res.json(visits);
 };
 
 // ✅ Обновление визита
@@ -151,6 +173,49 @@ const addServiceToVisit = async (req, res) => {
   }
 };
 
+const completeVisit = async (req, res) => {
+  const { id } = req.params;
+  const { note } = req.body;
+
+  const visit = await Visit.findById(id);
+  if (!visit) return res.status(404).json({ message: "Visit not found" });
+
+  if (visit.status === "completed") {
+    return res.status(400).json({ message: "Visit already completed" });
+  }
+
+  visit.status = "completed";
+  if (note) visit.note = note;
+  await visit.save();
+
+  res.json({ message: "Visit marked as completed", visit });
+};
+
+
+const updateVisitDoctorFields = async (req, res) => {
+  const { id } = req.params;
+  const { symptoms, diagnosis, recommendations, note, attachments } = req.body;
+
+  const visit = await Visit.findById(id);
+  if (!visit) return res.status(404).json({ message: "Visit not found" });
+
+  if (visit.status === "completed") {
+    return res.status(400).json({ message: "Cannot update a completed visit." });
+  }
+
+  if (symptoms !== undefined) visit.symptoms = symptoms;
+  if (diagnosis !== undefined) visit.diagnosis = diagnosis;
+  if (recommendations !== undefined) visit.recommendations = recommendations;
+  if (note !== undefined) visit.note = note;
+  if (attachments && Array.isArray(attachments)) {
+    visit.attachments = [...visit.attachments, ...attachments];
+  }
+
+  await visit.save();
+
+  res.json({ message: "Visit updated", visit });
+};
+
 
 
 module.exports = {
@@ -160,5 +225,8 @@ module.exports = {
   updateVisit,
   deleteVisit,
   getVisitWithPayments,
-  addServiceToVisit
+  addServiceToVisit,
+  getMyVisits,
+  completeVisit,
+  updateVisitDoctorFields
 };

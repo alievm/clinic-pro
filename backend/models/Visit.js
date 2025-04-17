@@ -32,8 +32,30 @@ const visitSchema = new mongoose.Schema({
   reason: {
     type: String,
   },
+  symptoms: {
+    type: String,
+    default: "",
+  }, // Жалоба / симптомы
+  
+  diagnosis: {
+    type: String,
+    default: "",
+  }, // Диагноз
+  
+  recommendations: {
+    type: String,
+    default: "",
+  }, // Назначения
+  
+  attachments: [
+    {
+      type: String, // путь к файлу
+    },
+  ], 
+  
   note: {
     type: String,
+    default: "",
   },
 }, { timestamps: true });
 

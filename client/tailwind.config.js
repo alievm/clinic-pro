@@ -15,9 +15,7 @@ export default {
         padding: '.5rem',
       },
       fontFamily: {
-        'body': ["Roboto", "sans-serif"],
-        'heading': ["Nunito", "sans-serif"],
-        'nioicon': ["Nioicon"]
+        aeonik: ['Aeonik', 'sans-serif'],
       },
       fontSize: {
         'xxs':'11px',
@@ -34,18 +32,18 @@ export default {
         'relaxed': '0.2em'
       },
       colors: {
-        primary:{
-          50: '#f7f8ff',
-          100: '#eff1ff',
-          200: '#e3e7fe',
-          300: '#c4cefe',
-          400: '#9cabff',
-          500: '#798bff',
-          600: '#6576ff',
-          700: '#5664d9',
-          800: '#465fff',
-          900: '#2c3782',
-          950: '#29347a',
+        primary: {
+          50:  '#fff5f5',
+          100: '#ffe3e3',
+          200: '#ffbdbd',
+          300: '#ff9999',
+          400: '#ff6666',
+          500: '#ff2a2a',     // ближе к Ferrari Red
+          600: '#e60000',     // насыщенный Rosso Corsa
+          700: '#cc0000',
+          800: '#990000',
+          900: '#660000',
+          950: '#3d0000',
         },
         yellow:{
           50: '#fef8e7',
@@ -97,7 +95,7 @@ export default {
           700: '#344357',
           800: '#2b3748',
           900: '#1f2b3a',
-          950: '#101924',
+          950: '#040612',
           1000: '#0d141d',
         },
       },

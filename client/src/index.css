@@ -1,3 +1,11 @@
+@import './assets/fonts/fonts.css';
+@import './components/sidebar/index.css';
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+
+
+.ni-chevron-right:before {
+    content: ">";
+}

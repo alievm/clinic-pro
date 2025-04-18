@@ -8,6 +8,12 @@ const visitRoutes = require("./routes/visitRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reservationRoutes = require("./routes/reservationRoutes");
+const stockUsageRoutes = require("./routes/stockUsageRoutes");
+const productRoutes = require("./routes/productRoutes");
+const stockEntryRoutes = require("./routes/stockEntryRoutes");
+const supplierRoutes = require("./routes/supplierRoutes");
+const productCategoryRoutes = require("./routes/productCategoryRoutes");
+
 const path = require("path");
 dotenv.config();
 connectDB();
@@ -30,6 +36,12 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/visits", visitRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/stock-usage", stockUsageRoutes); // Списания со склада
+app.use("/api/products", productRoutes);
+app.use("/api/stock-entry", stockEntryRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/product-categories", productCategoryRoutes);
+
 // Error handler placeholder
 app.use((err, req, res, next) => {
     console.error("SERVER ERROR:", err); // вывод в консоль

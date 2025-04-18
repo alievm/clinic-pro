@@ -21,6 +21,10 @@ const getServiceById = async (req, res) => {
 
 // ✅ Обновить услугу
 const updateService = async (req, res) => {
+  if (req.body.materials) {
+    console.log("Обновляем материалы:", req.body.materials);
+  }
+  
   const service = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!service) return res.status(404).json({ message: "Service not found" });
   res.json(service);

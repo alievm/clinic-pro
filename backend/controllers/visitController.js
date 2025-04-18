@@ -1,6 +1,9 @@
 const Visit = require("../models/Visit");
 const Payment = require("../models/Payment");
 const Service = require("../models/Service");
+const Product = require("../models/Product");
+const StockUsage = require("../models/StockUsage");
+const User = require("../models/User");
 const { removeReservationIfMatched } = require("./reservationController");
 
 const getVisitWithPayments = async (req, res) => {
@@ -176,20 +179,50 @@ const addServiceToVisit = async (req, res) => {
 
 const completeVisit = async (req, res) => {
   const { id } = req.params;
-  const { note } = req.body;
 
-  const visit = await Visit.findById(id);
+  const visit = await Visit.findById(id).populate("services.service").populate("doctor");
   if (!visit) return res.status(404).json({ message: "Visit not found" });
+  if (visit.status === "completed") return res.status(400).json({ message: "Already completed" });
 
-  if (visit.status === "completed") {
-    return res.status(400).json({ message: "Visit already completed" });
+  const doctor = await User.findById(visit.doctor._id);
+  const useInventory = doctor?.useInventory;
+
+  if (useInventory) {
+    for (const item of visit.services) {
+      const service = await Service.findById(item.service._id).populate("materials.product");
+
+      if (!service || !service.materials) continue;
+
+      for (const material of service.materials) {
+        const product = await Product.findById(material.product._id);
+        if (!product || !product.track) continue;
+
+        const totalQty = material.quantity * (item.quantity || 1);
+
+        if (!product.track || product.stock < totalQty) {
+          return res.status(400).json({ message: `Недостаточно на складе: ${product.name}` });
+        }
+
+        product.stock -= totalQty;
+        await product.save();
+
+        await StockUsage.create({
+          product: product._id,
+          quantity: totalQty,
+          type: "used",
+          usedIn: "visit",
+          referenceId: visit._id,
+          usedBy: doctor._id,
+          date: new Date()
+        });
+      }
+    }
   }
 
   visit.status = "completed";
-  if (note) visit.note = note;
   await visit.save();
 
-  res.json({ message: "Visit marked as completed", visit });
+  res.json({ message: "Visit completed", visit });
 };
 
 

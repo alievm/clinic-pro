@@ -13,6 +13,7 @@ const productRoutes = require("./routes/productRoutes");
 const stockEntryRoutes = require("./routes/stockEntryRoutes");
 const supplierRoutes = require("./routes/supplierRoutes");
 const productCategoryRoutes = require("./routes/productCategoryRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const path = require("path");
 dotenv.config();
@@ -41,6 +42,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/stock-entry", stockEntryRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/product-categories", productCategoryRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Error handler placeholder
 app.use((err, req, res, next) => {

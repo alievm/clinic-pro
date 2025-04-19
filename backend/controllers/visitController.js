@@ -184,38 +184,33 @@ const completeVisit = async (req, res) => {
   if (!visit) return res.status(404).json({ message: "Visit not found" });
   if (visit.status === "completed") return res.status(400).json({ message: "Already completed" });
 
-  const doctor = await User.findById(visit.doctor._id);
-  const useInventory = doctor?.useInventory;
+  for (const item of visit.services) {
+    const service = await Service.findById(item.service._id).populate("materials.product");
 
-  if (useInventory) {
-    for (const item of visit.services) {
-      const service = await Service.findById(item.service._id).populate("materials.product");
+    if (!service || !service.materials) continue;
 
-      if (!service || !service.materials) continue;
+    for (const material of service.materials) {
+      const product = await Product.findById(material.product._id);
+      if (!product || !product.track) continue;
 
-      for (const material of service.materials) {
-        const product = await Product.findById(material.product._id);
-        if (!product || !product.track) continue;
+      const totalQty = material.quantity * (item.quantity || 1);
 
-        const totalQty = material.quantity * (item.quantity || 1);
-
-        if (!product.track || product.stock < totalQty) {
-          return res.status(400).json({ message: `Недостаточно на складе: ${product.name}` });
-        }
-
-        product.stock -= totalQty;
-        await product.save();
-
-        await StockUsage.create({
-          product: product._id,
-          quantity: totalQty,
-          type: "used",
-          usedIn: "visit",
-          referenceId: visit._id,
-          usedBy: doctor._id,
-          date: new Date()
-        });
+      if (product.stock < totalQty) {
+        return res.status(400).json({ message: `Недостаточно на складе: ${product.name}` });
       }
+
+      product.stock -= totalQty;
+      await product.save();
+
+      await StockUsage.create({
+        product: product._id,
+        quantity: totalQty,
+        type: "used",
+        usedIn: "visit",
+        referenceId: visit._id,
+        usedBy: visit.doctor._id,
+        date: new Date()
+      });
     }
   }
 
@@ -224,6 +219,7 @@ const completeVisit = async (req, res) => {
 
   res.json({ message: "Visit completed", visit });
 };
+
 
 
 const updateVisitDoctorFields = async (req, res) => {

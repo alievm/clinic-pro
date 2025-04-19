@@ -13,10 +13,10 @@ const userSchema = new mongoose.Schema({
     enum: ["admin", "doctor", "reception", "accountant"],
     default: "reception",
   },
-  useInventory: {
-    type: Boolean,
-    default: true
-  }
+  // useInventory: {
+  //   type: Boolean,
+  //   default: true
+  // }
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);
